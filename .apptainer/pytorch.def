@@ -4,7 +4,7 @@ From: .apptainer/ngc_pytorch_2504.sif
 %environment
     export LC_ALL=C
     export LC_CTYPE=C
-    export HF_DATASETS_CACHE="/workspace/.datasets"
+    export HF_HOME="/workspace/.cache/huggingface"
     export DEBIAN_FRONTEND=noninteractive
 
 %files
