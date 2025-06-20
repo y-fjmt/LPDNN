@@ -1,7 +1,7 @@
 #!/bin/bash
 #$-cwd
 #$-l node_h=2
-#$-l h_rt=72:00:00
+#$-l h_rt=24:00:00
 
 apptainer \
     exec \

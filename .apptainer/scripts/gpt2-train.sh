@@ -1,11 +1,11 @@
 #!/bin/bash
 set -e
 
-CHECKPOINT_PATH=".ckpts/gpt3-pile-fp8"
-TENSORBOARD_LOGS_PATH=".logs/gpt3-pile-fp8"
-VOCAB_FILE="../pile-vocab.json"
-MERGE_FILE="../pile-merges.txt"
-DATA_PATH="pile_content_document"
+CHECKPOINT_PATH=".ckpts/gpt3-c4-fp8"
+TENSORBOARD_LOGS_PATH=".logs/gpt3-c4-fp8"
+VOCAB_FILE="../c4-vocab.json"
+MERGE_FILE="../c4-merges.txt"
+DATA_PATH="c4_content_document"
 
 DISTRIBUTED_ARGS=(
     --nproc_per_node $(nvidia-smi -L | wc -l)
