@@ -7,6 +7,5 @@ apptainer \
     exec \
     --nv \
     -B .:/workspace \
-    -B $HOME/.cache/huggingface:/root/.cache/huggingface \
     .apptainer/pytorch.sif \
     ./.apptainer/scripts/gpt2-train.sh
