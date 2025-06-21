@@ -1,7 +1,7 @@
 #!/bin/bash
 #$-cwd
 #$-l cpu_40=1
-#$-l h_rt=4:00:00
+#$-l h_rt=24:00:00
 
 apptainer \
     exec \
