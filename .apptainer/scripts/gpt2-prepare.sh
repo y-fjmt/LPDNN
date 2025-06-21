@@ -2,7 +2,7 @@
 set -e
 
 python3 -c "from datasets import load_dataset; \
-            ds = load_dataset('allenai/c4', 'en'); \
+            ds = load_dataset('allenai/c4', 'en')['train']; \
             ds.to_json("c4.json", lines=True)"
 
 cd Megatron-LM
