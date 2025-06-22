@@ -1,3 +1,8 @@
 .datasets
 *.sif
 .cache
+
+*.sh.*
+*.json
+*.txt
+Megatron-LM/*

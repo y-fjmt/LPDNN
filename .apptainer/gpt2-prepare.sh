@@ -1,6 +1,6 @@
 #!/bin/bash
 #$-cwd
-#$-l cpu_40=1
+#$-l cpu_80=1
 #$-l h_rt=24:00:00
 
 apptainer \
