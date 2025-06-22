@@ -1,16 +1,16 @@
 #!/bin/bash
 set -e
 
-CHECKPOINT_PATH=".ckpts/gpt3-c4-fp8"
-TENSORBOARD_LOGS_PATH=".logs/gpt3-c4-fp8"
-VOCAB_FILE="../c4-vocab.json"
-MERGE_FILE="../c4-merges.txt"
-DATA_PATH="c4_content_document"
+CHECKPOINT_PATH=".ckpts/gpt3-c4-bf16"
+TENSORBOARD_LOGS_PATH=".logs/gpt3-c4-bf16"
+VOCAB_FILE="../gpt2_vocab.json"
+MERGE_FILE="../gpt2_merges.txt"
+DATA_PATH="c4_text_document"
 
 DISTRIBUTED_ARGS=(
     --nproc_per_node $(nvidia-smi -L | wc -l)
-    --nnodes 1
-    --master_addr localhost
+    --nnodes $(cat $PE_HOSTFILE | wc -l)
+    --master_addr $(awk '{print $1}' $PE_HOSTFILE)
     --master_port 12345
 )
 
@@ -33,15 +33,16 @@ TRAINING_ARGS=(
     --init-method-std 0.006 
     --clip-grad 1.0 
     --bf16
-    --fp8-format hybrid
-    --fp8-amax-compute-algo max
-    --transformer-impl transformer_engine
     --lr 6.0e-5 
     --lr-decay-style cosine 
     --min-lr 6.0e-6
     --lr-warmup-fraction .001 
     --lr-decay-iters 430000 
 )
+
+# --fp8-format hybrid
+# --fp8-amax-compute-algo max
+# --transformer-impl transformer_engine
 
 MODEL_PARALLEL_ARGS=(
 	--tensor-model-parallel-size 1

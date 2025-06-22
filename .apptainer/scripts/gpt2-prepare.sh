@@ -1,16 +1,16 @@
 #!/bin/bash
 set -e
 
-# python3 -c "from datasets import load_dataset; \
-#             ds = load_dataset('allenai/c4', 'en')['train']; \
-#             ds.to_json('c4_corpus.json', lines=True)"
+python3 -c "from datasets import load_dataset; \
+            ds = load_dataset('allenai/c4', 'en')['train']; \
+            ds.to_json('c4_corpus.json', lines=True)"
 
 cd Megatron-LM
 
-# curl -L -o gpt2_merges.txt \
-#     "https://huggingface.co/openai-community/gpt2/resolve/main/merges.txt?download=true"
-# curl -L -o gpt2_vocab.json \
-#     "https://huggingface.co/openai-community/gpt2/resolve/main/vocab.json?download=true"
+curl -L -o gpt2_merges.txt \
+    "https://huggingface.co/openai-community/gpt2/resolve/main/merges.txt?download=true"
+curl -L -o gpt2_vocab.json \
+    "https://huggingface.co/openai-community/gpt2/resolve/main/vocab.json?download=true"
 
 N_SPLITS=4
 NPROC=$(nproc)
