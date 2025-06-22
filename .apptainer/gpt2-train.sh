@@ -8,4 +8,4 @@ apptainer \
     --nv \
     -B .:/workspace \
     .apptainer/pytorch.sif \
-    ./.apptainer/scripts/gpt2-train.sh
+    ./.apptainer/scripts/gpt2-train-bf16.sh
