@@ -10,7 +10,7 @@ DATA_PATH="c4_text_document"
 DISTRIBUTED_ARGS=(
     --nproc_per_node $(nvidia-smi -L | wc -l)
     --nnodes $(cat $PE_HOSTFILE | wc -l)
-    --master_addr $(awk '{print $1}' $PE_HOSTFILE)
+    --master_addr $(head -n 1 $PE_HOSTFILE | awk '{print $1}')
     --master_port 12345
 )
 
