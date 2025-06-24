@@ -39,6 +39,7 @@ From: .apptainer/ngc_pytorch_2505.sif
     apt clean
     rm -rf /var/lib/apt/lists/*
 
+    # c.f. https://forums.developer.nvidia.com/t/triton-runtime-error-in-ngc-pytorch-25-04-apptainer-container-libcuda-so-not-found/332378
     cd /usr/local/cuda/compat
     if [ ! -e lib ]; then
         ln -s lib.real lib
