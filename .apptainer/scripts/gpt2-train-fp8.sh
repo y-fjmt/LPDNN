@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-CHECKPOINT_PATH=".ckpts/gpt3-c4-bf16"
-TENSORBOARD_LOGS_PATH=".logs/gpt3-c4-bf16"
+CHECKPOINT_PATH=".ckpts/gpt3-c4-fp8"
+TENSORBOARD_LOGS_PATH=".logs/gpt3-c4-fp8"
 VOCAB_FILE="../gpt2_vocab.json"
 MERGE_FILE="../gpt2_merges.txt"
 DATA_PATH="c4_text_document"
@@ -11,7 +11,7 @@ if [ TSUBAME_VERSION = "4.0" ]; then
     DISTRIBUTED_ARGS=(
     --nproc_per_node $(nvidia-smi -L | wc -l)
     --nnodes $(cat $PE_HOSTFILE | wc -l)
-    --master_addr $(cat $PE_HOSTFILE | awk '{print$1}' | sort | head -n 1)
+    --master_addr $(head -n 1 $PE_HOSTFILE | awk '{print $1}')
     --master_port 12345
 )
 else
@@ -42,6 +42,9 @@ TRAINING_ARGS=(
     --init-method-std 0.006 
     --clip-grad 1.0 
     --bf16
+    --fp8-format hybrid
+    --fp8-amax-compute-algo max
+    --transformer-impl transformer_engine
     --lr 6.0e-5 
     --lr-decay-style cosine 
     --min-lr 6.0e-6
