@@ -7,7 +7,8 @@ set -e
 
 # create base apptainer image
 apptainer build \
-        .apptainer/ngc_pytorch_2504.sif \
+        --fakeroot \
+        .apptainer/ngc_pytorch_2505.sif \
         docker://nvcr.io/nvidia/pytorch:25.05-py3
 
 apptainer build \
