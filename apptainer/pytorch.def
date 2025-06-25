@@ -4,6 +4,7 @@ From: apptainer/ngc_pytorch_2505.sif
 %environment
     export LC_ALL=C
     export LC_CTYPE=C
+    export CURL_CA_BUNDLE="/etc/ssl/certs/ca-certificates.crt"
     export HF_HOME="/workspace/.cache/huggingface"
     export DEBIAN_FRONTEND="noninteractive"
 
@@ -12,6 +13,8 @@ From: apptainer/ngc_pytorch_2505.sif
 
 %post
     apt update -y 
+    apt install -y ca-certificates
+    update-ca-certificates
 
     pip install -r requirements.txt
     
