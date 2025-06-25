@@ -26,4 +26,6 @@ python3 Megatron-LM/tools/preprocess_data.py \
     --workers=$WORKERS \
     --partitions=$N_SPLITS \
     --append-eod
-    
+
+rm -rf .cache \
+       pretrain_gpt/data/c4_corpus*.json
