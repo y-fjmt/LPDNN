@@ -1,14 +1,14 @@
 Bootstrap: localimage
-From: .apptainer/ngc_pytorch_2505.sif
+From: apptainer/ngc_pytorch_2505.sif
 
 %environment
     export LC_ALL=C
     export LC_CTYPE=C
     export HF_HOME="/workspace/.cache/huggingface"
-    export DEBIAN_FRONTEND=noninteractive
+    export DEBIAN_FRONTEND="noninteractive"
 
 %files
-    requirements.txt
+    apptainer/requirements.txt requirements.txt
 
 %post
     apt update -y 
@@ -38,9 +38,6 @@ From: .apptainer/ngc_pytorch_2505.sif
 
     apt clean
     rm -rf /var/lib/apt/lists/*
-
-    # c.f. https://forums.developer.nvidia.com/t/triton-runtime-error-in-ngc-pytorch-25-04-apptainer-container-libcuda-so-not-found/332378
-    cd /usr/local/cuda/compat
-    if [ ! -e lib ]; then
-        ln -s lib.real lib
-    fi
+    rm -rf /usr/local/cuda/compat/lib
+    ln -s /usr/local/cuda/compat/lib.real \
+          /usr/local/cuda/compat/lib

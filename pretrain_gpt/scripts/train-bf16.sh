@@ -1,13 +1,13 @@
 #!/bin/bash
 set -e
 
-CHECKPOINT_PATH=".ckpts/gpt3-c4-bf16"
-TENSORBOARD_LOGS_PATH=".logs/gpt3-c4-bf16"
-VOCAB_FILE="../gpt2_vocab.json"
-MERGE_FILE="../gpt2_merges.txt"
-DATA_PATH="c4_text_document"
+CHECKPOINT_PATH="pretrain_gpt/.ckpts/gpt-c4-bf16"
+TENSORBOARD_LOGS_PATH="pretrain_gpt/.logs/gpt-c4-bf16"
+VOCAB_FILE="pretrain_gpt/tokenizer/gpt2_vocab.json"
+MERGE_FILE="pretrain_gpt/tokenizer/gpt2_merges.txt"
+DATA_PATH="pretrain_gpt/data/c4_text_document"
 
-if [ TSUBAME_VERSION = "4.0" ]; then
+if [ "$SGE_CLUSTER_NAME" = "t4" ]; then
     DISTRIBUTED_ARGS=(
     --nproc_per_node $(nvidia-smi -L | wc -l)
     --nnodes $(cat $PE_HOSTFILE | wc -l)
@@ -71,8 +71,7 @@ EVAL_AND_LOGGING_ARGS=(
     --tensorboard-dir $TENSORBOARD_LOGS_PATH 
 )
 
-cd Megatron-LM
-torchrun ${DISTRIBUTED_ARGS[@]} pretrain_gpt.py \
+torchrun ${DISTRIBUTED_ARGS[@]} Megatron-LM/pretrain_gpt.py \
     ${GPT_MODEL_ARGS[@]} \
     ${TRAINING_ARGS[@]} \
     ${MODEL_PARALLEL_ARGS[@]} \

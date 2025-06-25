@@ -1,8 +1,7 @@
 .datasets
-*.sif
 .cache
+apptainer/*.sif
 
-*.sh.*
-*.json
-*.txt
-Megatron-LM/*
+pretrain_gpt/data/*
+pretrain_gpt/*.txt
+pretrain_gpt/*.json
