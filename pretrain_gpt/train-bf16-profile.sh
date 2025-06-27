@@ -1,7 +1,7 @@
 #!/bin/bash
 #$-cwd
 #$-l gpu_1=1
-#$-l h_rt=00:20:00
+#$-l h_rt=00:30:00
 
 if [ "$SGE_CLUSTER_NAME" = "t4" ]; then
     source ~/.bash_profile
@@ -12,4 +12,4 @@ apptainer \
     --nv \
     -B .:/workspace \
     apptainer/pytorch.sif \
-    ./pretrain_gpt/scripts/train-bf16-single.sh
+    ./pretrain_gpt/scripts/train-bf16-profile.sh
