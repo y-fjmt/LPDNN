@@ -74,7 +74,7 @@ EVAL_AND_LOGGING_ARGS=(
 )
 
 nsys profile .venv/bin/python3 -m \
-torchrun ${DISTRIBUTED_ARGS[@]} Megatron-LM/pretrain_gpt.py \
+torch.distributed.run ${DISTRIBUTED_ARGS[@]} Megatron-LM/pretrain_gpt.py \
     ${GPT_MODEL_ARGS[@]} \
     ${TRAINING_ARGS[@]} \
     ${MODEL_PARALLEL_ARGS[@]} \
