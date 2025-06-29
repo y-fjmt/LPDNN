@@ -8,7 +8,6 @@ set -e
 if [ "$SGE_CLUSTER_NAME" = "t4" ]; then
     module purge
     module load cuda/12.8.0
-    module load cudnn/9.8.0
     source ~/.bash_profile
 fi
 

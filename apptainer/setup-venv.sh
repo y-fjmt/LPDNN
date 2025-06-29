@@ -7,7 +7,6 @@
 if [ "$SGE_CLUSTER_NAME" = "t4" ]; then
     module purge
     module load cuda/12.8.0
-    module load cudnn/9.8.0
     source ~/.bash_profile
 fi
 
@@ -22,7 +21,7 @@ python3 -m venv .venv
 
 # Megatron-LM
 .venv/bin/python3 -m \
-    pip install -e ./Megatron-LM
+    pip install megatron-core[lts]
 
 # Transformer Engine
 .venv/bin/python3 -m \

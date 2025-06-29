@@ -8,7 +8,6 @@ set -e
 if [ "$SGE_CLUSTER_NAME" = "t4" ]; then
     module purge
     module load cuda/12.8.0
-    module load cudnn/9.8.0
     source ~/.bash_profile
 fi
 
@@ -19,7 +18,7 @@ MERGE_FILE="pretrain_gpt/tokenizer/gpt2_merges.txt"
 DATA_PATH="pretrain_gpt/data/c4_text_document"
 
 DISTRIBUTED_ARGS=(
-    --nproc_per_node 1
+    --nproc_per_node $(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
     --nnodes 1
     --master_addr localhost
     --master_port 12345
