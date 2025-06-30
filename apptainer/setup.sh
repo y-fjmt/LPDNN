@@ -11,7 +11,6 @@ fi
 
 # create base apptainer image
 apptainer build \
-	--fakeroot \
 	apptainer/ngc_pytorch_2505.sif \
 	docker://nvcr.io/nvidia/pytorch:25.05-py3
 
