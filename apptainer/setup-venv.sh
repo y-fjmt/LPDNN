@@ -7,6 +7,7 @@
 if [ "$SGE_CLUSTER_NAME" = "t4" ]; then
     module purge
     module load cuda/12.8.0
+    module load cudnn/9.8.0
     source ~/.bash_profile
 fi
 
@@ -28,6 +29,10 @@ python3 -m venv .venv
 pip install \
     --no-build-isolation transformer_engine[pytorch]
 
+if [ "$SGE_CLUSTER_NAME" = "t4" ]; then
+    module unload cudnn
+fi
+
 # NVIDIA APEX
 git clone https://github.com/NVIDIA/apex
 MAX_JOBS=$(nproc) \
@@ -38,3 +43,4 @@ pip install -v \
     --no-cache-dir --no-build-isolation \
     --config-settings "--build-option=--cpp_ext --cuda_ext --parallel 8" \
     ./apex
+    
