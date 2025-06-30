@@ -8,19 +8,17 @@ MERGE_FILE="pretrain_gpt/tokenizer/gpt2_merges.txt"
 DATA_PATH="pretrain_gpt/data/c4_text_document"
 
 if [ "$SGE_CLUSTER_NAME" = "t4" ]; then
-    DISTRIBUTED_ARGS=(
-    --nproc_per_node $(nvidia-smi -L | wc -l)
-    --nnodes $(cat $PE_HOSTFILE | wc -l)
-    --master_addr $(cat $PE_HOSTFILE | awk '{print$1}' | sort | head -n 1)
-    --master_port 12345
-)
-else
-    DISTRIBUTED_ARGS=(
-        --nproc_per_node $(nvidia-smi -L | wc -l)
-        --nnodes 1
-        --master_addr localhost
-        --master_port 12345
-    )
+
+    export RANK=$OMPI_COMM_WORLD_RANK
+    export WORLD_SIZE=$OMPI_COMM_WORLD_SIZE
+
+    # transfer dataset to faster local scratch
+    if [ "$OMPI_COMM_WORLD_LOCAL_RANK" = "0" ]; then
+        echo "[rank:$RANK] Transferring dataset..."
+        cp -rp pretrain_gpt/data ${T4TMPDIR} 
+        DATA_PATH="${T4TMPDIR}/data/c4_text_document"
+        echo "[rank:$RANK] Transfer complete"
+    fi
 fi
 
 GPT_MODEL_ARGS=(
@@ -74,7 +72,7 @@ EVAL_AND_LOGGING_ARGS=(
     --tensorboard-dir $TENSORBOARD_LOGS_PATH 
 )
 
-torchrun ${DISTRIBUTED_ARGS[@]} Megatron-LM/pretrain_gpt.py \
+python3 Megatron-LM/pretrain_gpt.py \
     ${GPT_MODEL_ARGS[@]} \
     ${TRAINING_ARGS[@]} \
     ${MODEL_PARALLEL_ARGS[@]} \
