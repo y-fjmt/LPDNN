@@ -38,7 +38,7 @@ if [ "$SGE_CLUSTER_NAME" = "t4" ]; then
             --bind /gs/fs/tga-sssml2/fujimoto \
             --bind /var/spool/age \
             apptainer/pytorch.sif \
-            ./pretrain_gpt/scripts/train-fp8.sh
+            ./pretrain_gpt/scripts/train-fp32.sh
 else
 
     # general GPU machine
@@ -53,5 +53,5 @@ else
         --env "MASTER_PORT=$MASTER_PORT" \
         --bind .:/workspace \
         apptainer/pytorch.sif \
-        ./pretrain_gpt/scripts/train-fp8.sh
+        ./pretrain_gpt/scripts/train-fp32.sh
 fi

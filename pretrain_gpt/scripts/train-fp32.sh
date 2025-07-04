@@ -1,18 +1,26 @@
 #!/bin/bash
 set -e
 
-CHECKPOINT_PATH="pretrain_gpt/.ckpts/gpt-c4-bf16-qp"
-TENSORBOARD_LOGS_PATH="pretrain_gpt/.logs/gpt-c4-bf16-qp"
+CHECKPOINT_PATH="pretrain_gpt/.ckpts/gpt-c4-fp32"
+TENSORBOARD_LOGS_PATH="pretrain_gpt/.logs/gpt-c4-fp32"
 VOCAB_FILE="pretrain_gpt/tokenizer/gpt2_vocab.json"
 MERGE_FILE="pretrain_gpt/tokenizer/gpt2_merges.txt"
-DATA_PATH="${T4TMPDIR}/data/c4_text_document"
+DATA_PATH="pretrain_gpt/data/c4_text_document"
 
-DISTRIBUTED_ARGS=(
-    --nproc_per_node 1
-    --nnodes 1
-    --master_addr localhost
-    --master_port 12345
-)
+if [ "$SGE_CLUSTER_NAME" = "t4" ]; then
+
+    export RANK=$OMPI_COMM_WORLD_RANK
+    export WORLD_SIZE=$OMPI_COMM_WORLD_SIZE
+
+    # transfer dataset to faster local scratch
+    if [ "$OMPI_COMM_WORLD_LOCAL_RANK" = "0" ]; then
+        echo "[rank:$RANK] Transferring dataset..."
+        # cp -rp pretrain_gpt/data ${T4TMPDIR} 
+        # DATA_PATH="${T4TMPDIR}/data/c4_text_document"
+        DATA_PATH="/gs/fs/tga-sssml2/fujimoto/c4/c4_text_document"
+        echo "[rank:$RANK] Transfer complete"
+    fi
+fi
 
 GPT_MODEL_ARGS=(
     --num-layers 12 
@@ -24,15 +32,14 @@ GPT_MODEL_ARGS=(
 )
 
 TRAINING_ARGS=(
-    --micro-batch-size 64
+    --micro-batch-size 32
     --global-batch-size 1536
-    --train-iters 10 
+    --train-iters 500000 
     --weight-decay 0.1 
     --adam-beta1 0.9 
     --adam-beta2 0.95 
     --init-method-std 0.006 
     --clip-grad 1.0 
-    --bf16
     --lr 6.0e-5 
     --lr-decay-style cosine 
     --min-lr 6.0e-6
@@ -58,11 +65,11 @@ EVAL_AND_LOGGING_ARGS=(
     --eval-interval 1000 
     --save $CHECKPOINT_PATH 
     --load $CHECKPOINT_PATH 
-    --eval-iters 1
+    --eval-iters 10
     --tensorboard-dir $TENSORBOARD_LOGS_PATH 
 )
 
-nsys profile torchrun ${DISTRIBUTED_ARGS[@]} Megatron-LM/pretrain_gpt.py \
+python3 Megatron-LM/pretrain_gpt.py \
     ${GPT_MODEL_ARGS[@]} \
     ${TRAINING_ARGS[@]} \
     ${MODEL_PARALLEL_ARGS[@]} \

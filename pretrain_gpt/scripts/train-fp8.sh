@@ -15,8 +15,9 @@ if [ "$SGE_CLUSTER_NAME" = "t4" ]; then
     # transfer dataset to faster local scratch
     if [ "$OMPI_COMM_WORLD_LOCAL_RANK" = "0" ]; then
         echo "[rank:$RANK] Transferring dataset..."
-        cp -rp pretrain_gpt/data ${T4TMPDIR} 
-        DATA_PATH="${T4TMPDIR}/data/c4_text_document"
+        # cp -rp pretrain_gpt/data ${T4TMPDIR} 
+        # DATA_PATH="${T4TMPDIR}/data/c4_text_document"
+        DATA_PATH="/gs/fs/tga-sssml2/fujimoto/c4/c4_text_document"
         echo "[rank:$RANK] Transfer complete"
     fi
 fi
