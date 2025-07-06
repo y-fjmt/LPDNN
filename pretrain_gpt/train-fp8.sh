@@ -1,7 +1,7 @@
 #!/bin/bash
 #$-cwd
-#$-l node_q=4
-#$-l h_rt=24:00:00
+#$-l node_h=2
+#$-l h_rt=1:00:00
 
 if [ "$SGE_CLUSTER_NAME" = "t4" ]; then
 
@@ -15,19 +15,14 @@ if [ "$SGE_CLUSTER_NAME" = "t4" ]; then
 
     cat $PE_HOSTFILE
 
-    # FIXME: multiple processes on the same node
-    HOSTS=$(cat $PE_HOSTFILE | awk '{print$1}' | paste -s -d ',')
-
     N_NODES=$(cat $PE_HOSTFILE | wc -l)
-    N_PER_NODE=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
-    WORLD_SIZE=$(($N_NODES * $N_PER_NODE))
 
     MASTER_ADDR=$(hostname -i)
     MASTER_PORT=12345
 
-    mpirun -np $WORLD_SIZE \
-        --npernode $N_PER_NODE \
-        -H $HOSTS \
+    mpirun -np $N_NODES \
+        --npernode 1 \
+        -x HOSTNAME \
         -x MASTER_ADDR=$MASTER_ADDR \
         -x MASTER_PORT=$MASTER_PORT \
         apptainer \
@@ -35,22 +30,15 @@ if [ "$SGE_CLUSTER_NAME" = "t4" ]; then
             --nv \
             --bind .:/workspace \
             --bind ${T4TMPDIR} \
-            --bind /gs/fs/tga-sssml2/fujimoto \
             --bind /var/spool/age \
             apptainer/pytorch.sif \
             ./pretrain_gpt/scripts/train-fp8.sh
 else
 
     # general GPU machine
-
-    MASTER_ADDR="localhost"
-    MASTER_PORT=12345
-
     apptainer \
         exec \
         --nv \
-        --env "MASTER_ADDR=$MASTER_ADDR" \
-        --env "MASTER_PORT=$MASTER_PORT" \
         --bind .:/workspace \
         apptainer/pytorch.sif \
         ./pretrain_gpt/scripts/train-fp8.sh

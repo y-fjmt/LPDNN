@@ -7,19 +7,12 @@ VOCAB_FILE="pretrain_gpt/tokenizer/gpt2_vocab.json"
 MERGE_FILE="pretrain_gpt/tokenizer/gpt2_merges.txt"
 DATA_PATH="pretrain_gpt/data/c4_text_document"
 
+# transfer dataset to faster local scratch
 if [ "$SGE_CLUSTER_NAME" = "t4" ]; then
-
-    export RANK=$OMPI_COMM_WORLD_RANK
-    export WORLD_SIZE=$OMPI_COMM_WORLD_SIZE
-
-    # transfer dataset to faster local scratch
-    if [ "$OMPI_COMM_WORLD_LOCAL_RANK" = "0" ]; then
-        echo "[rank:$RANK] Transferring dataset..."
-        # cp -rp pretrain_gpt/data ${T4TMPDIR} 
-        # DATA_PATH="${T4TMPDIR}/data/c4_text_document"
-        DATA_PATH="/gs/fs/tga-sssml2/fujimoto/c4/c4_text_document"
-        echo "[rank:$RANK] Transfer complete"
-    fi
+    echo "[$(hostname)] Transferring dataset..."
+    cp -rp pretrain_gpt/data ${T4TMPDIR} 
+    DATA_PATH="${T4TMPDIR}/data/c4_text_document"
+    echo "[$(hostname)] Transfer complete"
 fi
 
 GPT_MODEL_ARGS=(
@@ -73,9 +66,38 @@ EVAL_AND_LOGGING_ARGS=(
     --tensorboard-dir $TENSORBOARD_LOGS_PATH 
 )
 
-python3 Megatron-LM/pretrain_gpt.py \
-    ${GPT_MODEL_ARGS[@]} \
-    ${TRAINING_ARGS[@]} \
-    ${MODEL_PARALLEL_ARGS[@]} \
-    ${DATA_ARGS[@]} \
-    ${EVAL_AND_LOGGING_ARGS[@]}
+N_GPUS=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
+
+if [ "$SGE_CLUSTER_NAME" = "t4" ]; then
+
+    # TSUBAME4
+    
+    DATA_ARGS+=(--data-cache-path "pretrain_gpt/data/c4_text_document/cache")
+
+    DISTRIBUTED_ARGS=(
+        --nproc-per-node $N_GPUS
+        --nnodes $OMPI_COMM_WORLD_SIZE
+        --rdzv-id $JOB_ID
+        --rdzv-backend c10d
+        --rdzv-endpoint $MASTER_ADDR:$MASTER_PORT
+    )
+
+else
+
+    # general GPU machine
+
+    DISTRIBUTED_ARGS=(
+        --nproc-per-node $N_GPUS
+        --nnodes 1
+        --master-addr localhost
+        --master-port 12345
+    )
+
+fi
+
+torchrun ${DISTRIBUTED_ARGS[@]} Megatron-LM/pretrain_gpt.py \
+        ${GPT_MODEL_ARGS[@]} \
+        ${TRAINING_ARGS[@]} \
+        ${MODEL_PARALLEL_ARGS[@]} \
+        ${DATA_ARGS[@]} \
+        ${EVAL_AND_LOGGING_ARGS[@]}
