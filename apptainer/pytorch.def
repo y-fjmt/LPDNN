@@ -7,6 +7,7 @@ From: apptainer/ngc_pytorch_2505.sif
     export CURL_CA_BUNDLE="/etc/ssl/certs/ca-certificates.crt"
     export HF_HOME="/workspace/.cache/huggingface"
     export DEBIAN_FRONTEND="noninteractive"
+    export PYTHONPATH="$PYTHONPATH:/opt/Megatron-LM"
 
 %files
     apptainer/requirements.txt requirements.txt
