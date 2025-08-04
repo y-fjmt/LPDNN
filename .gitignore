@@ -1,3 +1,5 @@
+__pycache__
+
 .datasets
 .cache
 apptainer/*.sif
@@ -6,3 +8,6 @@ pretrain_gpt/.ckpts/*
 pretrain_gpt/.logs/*
 pretrain_gpt/data/*
 pretrain_gpt/tokenizer/*
+
+vision/data/MNIST
+vision/data/ILSVRC2012_*
