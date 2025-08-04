@@ -1,3 +1,4 @@
+import math
 import torch
 import torch.nn.functional as F
 import torch.cuda.nvtx as nvtx
@@ -5,6 +6,7 @@ from torch import nn
 from torch import amp
 from torch import optim
 from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
 
 from tqdm import tqdm
 
@@ -14,10 +16,12 @@ def train_amp(
         train_loader: DataLoader, 
         optimizer: optim.Optimizer, 
         scheduler: optim.lr_scheduler.LRScheduler,
+        epoch: int,
         device: torch.device,
         scaler: amp.GradScaler, 
         dtype: torch.dtype,
-        grad_accum_step: int = 1
+        grad_accum_step: int = 1,
+        tensorboard_writer: SummaryWriter | None = None
     ) -> None:
     
     model.train()
@@ -39,6 +43,8 @@ def train_amp(
         
         scaler.scale(loss).backward()
         
+        scaled_loss = loss.detach().item() * grad_accum_step
+        
         if ((batch_idx+1) % grad_accum_step == 0) or (batch_idx+1 == len(iter)):
             # scaler.unscale_(optimizer)
             # nn.utils.clip_grad_norm_(model.parameters(), max_norm=2.0)
@@ -46,6 +52,12 @@ def train_amp(
             scaler.update()
             optimizer.zero_grad()
             scheduler.step()
-        
-        iter.set_postfix({'loss': loss.detach().item() * grad_accum_step})
+            
+            if tensorboard_writer is not None:
+                steps_per_epoch = math.ceil(len(train_loader) / grad_accum_step)
+                global_step = (epoch-1) * steps_per_epoch + batch_idx // grad_accum_step
+                tensorboard_writer.add_scalar('train_loss', scaled_loss, global_step)
+                tensorboard_writer.add_scalar('lr', scheduler.get_last_lr()[0], global_step)
+            
+        iter.set_postfix({'loss': scaled_loss})
         

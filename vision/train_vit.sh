@@ -8,4 +8,4 @@ apptainer \
     --nv \
     --bind .:/workspace \
     apptainer/pytorch.sif \
-    bash -c "python3 vision/ViT/main.py --compute-dtype=bf16"
+    bash -c "python3 vision/ViT/main.py --compute-dtype=fp16 --tensorboard-logdir=vision/.logs/fp16-$(date +%s)"

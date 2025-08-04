@@ -1,9 +1,11 @@
+import math
 import torch
 import torch.nn.functional as F
 import torch.cuda.nvtx as nvtx
 from torch import nn
 from torch import optim
 from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
 
 from tqdm import tqdm
 
@@ -13,8 +15,10 @@ def train(
         train_loader: DataLoader, 
         optimizer: optim.Optimizer, 
         scheduler: optim.lr_scheduler.LRScheduler,
+        epoch: int,
         device: torch.device,
-        grad_accum_step: int = 1
+        grad_accum_step: int = 1,
+        tensorboard_writer: SummaryWriter | None = None
     ) -> None:
     
     model.train()
@@ -34,19 +38,28 @@ def train(
         loss = loss / grad_accum_step
         loss.backward()
         
+        scaled_loss = loss.detach().item() * grad_accum_step
+        
         if ((batch_idx+1) % grad_accum_step == 0) or (batch_idx+1 == len(iter)):
             optimizer.step()
             optimizer.zero_grad()
             scheduler.step()
+            
+            if tensorboard_writer is not None:
+                steps_per_epoch = math.ceil(len(train_loader) / grad_accum_step)
+                global_step = (epoch-1) * steps_per_epoch + batch_idx // grad_accum_step
+                tensorboard_writer.add_scalar('train_loss', scaled_loss, global_step)
+                tensorboard_writer.add_scalar('lr', scheduler.get_last_lr()[0], global_step)
         
-        iter.set_postfix({'loss': loss.detach().item() * grad_accum_step})
+        iter.set_postfix({'loss': scaled_loss})
         
 
 
 def test(
         model: nn.Module, 
         test_loader: DataLoader, 
-        device: torch.device
+        device: torch.device,
+        tensorboard_writer: SummaryWriter | None = None
     ) -> None:
     
     model.eval()
@@ -77,3 +90,7 @@ def test(
         f"Accuracy: {n_correct}/{len(test_loader.dataset)} "
         f"({100. * n_correct / len(test_loader.dataset):.0f}%)\n"
     )
+    
+    if tensorboard_writer is not None:
+        tensorboard_writer.add_scalar('valid_loss', test_loss)
+        tensorboard_writer.add_scalar('accuracy', 100. * n_correct / len(test_loader.dataset))

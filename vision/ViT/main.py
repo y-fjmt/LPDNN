@@ -1,5 +1,5 @@
-import argparse
 import math
+import argparse
 
 import torch
 import torch.nn.functional as F
@@ -7,6 +7,8 @@ import torch.cuda.nvtx as nvtx
 from torch import nn
 from torch import optim
 from torch.utils.data import Dataset, DataLoader
+from torch.utils.tensorboard import SummaryWriter
+
 from torchvision import transforms, datasets
 from torchvision.models import vision_transformer
 
@@ -28,31 +30,12 @@ class cfg:
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-class RandomDataset(Dataset):
-    
-    def __init__(self, n_data: int, shape: torch.Size, 
-                 dtype: torch.dtype = torch.float32, 
-                 device: torch.device = torch.device('cpu')
-        ) -> None:
-        super().__init__()
-        self.n_data = n_data
-        self.shape = shape
-        self.dtype = dtype
-        self.device = device
-        
-    def __len__(self):
-        return self.n_data
-    
-    def __getitem__(self, index: int) -> torch.Tensor:
-        input = torch.rand(self.shape, dtype=self.dtype, device=self.device)
-        label = torch.randint(0, 1000, (1,), device=self.device).item()
-        return (input, label)
-
 def argument():
     parser = argparse.ArgumentParser('Pre-training VisionTransformer with ImageNet')
     parser.add_argument('--model', default='B16', choices=['B16', 'B32', 'L16', 'L32', 'H14'])
     parser.add_argument('--compute-dtype', default='fp32', choices=['fp32', 'fp16', 'bf16'])
     parser.add_argument('--weight-dtype', default='fp32', choices=['fp32', 'fp16', 'fp8'])
+    parser.add_argument('--tensorboard-logdir')
     parser.add_argument('--use-random-input', action='store_false')
     return parser.parse_args()
 
@@ -68,16 +51,13 @@ if __name__ == '__main__':
     
     args = argument()
     
-    if args.compute_dtype in ['fp16', 'bf16']:
-        scaler = torch.amp.GradScaler()
+        
+    if args.tensorboard_logdir is None:
+        writer = None
+    else:
+        writer = SummaryWriter(args.tensorboard_logdir)
+        
     
-    # ds_kwargs = {
-    #     "shape": (3, 224, 224),
-    #     "dtype": torch.float32,
-    #     "device": 'cpu',
-    # }
-    # train_ds = RandomDataset(65536, **ds_kwargs)
-    # valid_ds = RandomDataset(4096, **ds_kwargs)
     
     train_trans = transforms.Compose([
         transforms.RandomResizedCrop(224),
@@ -100,7 +80,7 @@ if __name__ == '__main__':
     ])
     
     train_ds = datasets.ImageFolder('vision/data/ILSVRC2012_img_train', transform=train_trans)
-    valid_ds = datasets.ImageFolder('vision/data/ILSVRC2012_img_train', transform=train_trans)
+    valid_ds = datasets.ImageFolder('vision/data/ILSVRC2012_img_val', transform=val_trans)
     
     loader_kwargs = {
         "batch_size": cfg.mini_batch_size,
@@ -120,7 +100,7 @@ if __name__ == '__main__':
        optimizer=optimizer,
        max_lr=cfg.lr,
        epochs=cfg.epoch,
-       steps_per_epoch=(len(train_loader) // cfg.accum_step),
+       steps_per_epoch=math.ceil(len(train_loader) / cfg.accum_step),
    )
     
     for epoch in range(1, cfg.epoch+1):
@@ -128,12 +108,16 @@ if __name__ == '__main__':
         print('-'*5, f"[Epoch{epoch:02}]", '-'*5)
         
         if args.compute_dtype == 'fp32':
-            train(model, train_loader, optimizer, scheduler, device, grad_accum_step=cfg.accum_step)
-        elif args.compute_dtype == 'fp16':
-            train_amp(model, train_loader, optimizer, scheduler, device, scaler, torch.float16, grad_accum_step=cfg.accum_step)
-        elif args.compute_dtype == 'bf16':
-            train_amp(model, train_loader, optimizer, scheduler, device, scaler, torch.bfloat16, grad_accum_step=cfg.accum_step)
+            train(model, train_loader, optimizer, scheduler, epoch, device, 
+                  grad_accum_step=cfg.accum_step, tensorboard_writer=writer)
             
-        test(model, valid_loader, device)
+        elif args.compute_dtype in ['fp16', 'bf16']:
+            # bfloat16 does not need scale 
+            # because the exponential part is the same as IEEE754
+            scaler = torch.amp.GradScaler(enabled=(args.compute_dtype == 'fp16'))
+            train_amp(model, train_loader, optimizer, scheduler, epoch, device, scaler, _to_torch_dype[args.compute_dtype], 
+                  grad_accum_step=cfg.accum_step, tensorboard_writer=writer)
+            
+        test(model, valid_loader, epoch, device)
         
     
