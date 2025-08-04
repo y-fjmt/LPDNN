@@ -8,32 +8,44 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 
-def train(model: nn.Module, train_loader: DataLoader, 
-          optimizer: optim.Optimizer, device: torch.device):
+def train(
+        model: nn.Module, 
+        train_loader: DataLoader, 
+        optimizer: optim.Optimizer, 
+        device: torch.device,
+        grad_accum_step: int = 1
+    ) -> None:
     
     model.train()
     model = model.to(device)
     
+    optimizer.zero_grad()
+    
     iter = tqdm(train_loader)
     iter.set_description('training progress')
     
-    for inputs, labels in iter:
-        
-        optimizer.zero_grad()
+    for batch_idx, (inputs, labels) in enumerate(iter):
         
         inputs, labels = inputs.to(device), labels.to(device)
         
         outputs = model(inputs)
         loss = F.cross_entropy(outputs, labels)
-        
+        loss = loss / grad_accum_step
         loss.backward()
-        optimizer.step()
         
-        iter.set_postfix({'loss': loss.detach().item()})
+        if ((batch_idx+1) % grad_accum_step == 0) or (batch_idx+1 == len(iter)):
+            optimizer.step()
+            optimizer.zero_grad()
+        
+        iter.set_postfix({'loss': loss.detach().item() * grad_accum_step})
         
 
 
-def test(model: nn.Module, test_loader: DataLoader, device: torch.device):
+def test(
+        model: nn.Module, 
+        test_loader: DataLoader, 
+        device: torch.device
+    ) -> None:
     
     model.eval()
     model = model.to(device)

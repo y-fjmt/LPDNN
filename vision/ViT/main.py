@@ -6,6 +6,7 @@ import torch.cuda.nvtx as nvtx
 from torch import nn
 from torch import optim
 from torch.utils.data import Dataset, DataLoader
+from torchvision import transforms, datasets
 from torchvision.models import vision_transformer
 
 import transformer_engine.pytorch as te
@@ -17,9 +18,11 @@ from trainer_fp32 import train, test
 from trainer_amp import train_amp
 
 class cfg:
-    epoch = 1
+    epoch = 10
     lr = 5e-3
-    batch_size = 64
+    batch_size = 4096
+    mini_batch_size = 64
+    accum_step = batch_size // mini_batch_size
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -73,18 +76,41 @@ if __name__ == '__main__':
     if args.compute_dtype in ['fp16', 'bf16']:
         scaler = torch.amp.GradScaler()
     
-    ds_kwargs = {
-        "shape": (3, 224, 224),
-        "dtype": torch.float32,
-        "device": 'cpu',
-    }
-    train_ds = RandomDataset(65536, **ds_kwargs)
-    valid_ds = RandomDataset(4096, **ds_kwargs)
+    # ds_kwargs = {
+    #     "shape": (3, 224, 224),
+    #     "dtype": torch.float32,
+    #     "device": 'cpu',
+    # }
+    # train_ds = RandomDataset(65536, **ds_kwargs)
+    # valid_ds = RandomDataset(4096, **ds_kwargs)
+    
+    train_trans = transforms.Compose([
+        transforms.RandomResizedCrop(224),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize(
+            mean=[0.5, 0.5, 0.5],
+            std=[0.5, 0.5, 0.5]
+        )
+    ])
+    
+    val_trans = transforms.Compose([
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize(
+            mean=[0.5, 0.5, 0.5],
+            std=[0.5, 0.5, 0.5]
+        )
+    ])
+    
+    train_ds = datasets.ImageFolder('vision/data/ILSVRC2012_img_train', transform=train_trans)
+    valid_ds = datasets.ImageFolder('vision/data/ILSVRC2012_img_train', transform=train_trans)
     
     loader_kwargs = {
-        "batch_size": cfg.batch_size,
-        "shuffle": False,
-        "num_workers": 32,
+        "batch_size": cfg.mini_batch_size,
+        "shuffle": True,
+        "num_workers": 128,
         "pin_memory": True,
     }
     train_loader = DataLoader(train_ds, **loader_kwargs)
@@ -95,11 +121,11 @@ if __name__ == '__main__':
         print('-'*5, f"[Epoch{epoch:02}]", '-'*5)
         
         if args.compute_dtype == 'fp32':
-            train(model, train_loader, optimizer, device)
+            train(model, train_loader, optimizer, device, grad_accum_step=cfg.accum_step)
         elif args.compute_dtype == 'fp16':
-            train_amp(model, train_loader, optimizer, device, scaler, torch.float16)
+            train_amp(model, train_loader, optimizer, device, scaler, torch.float16, grad_accum_step=cfg.accum_step)
         elif args.compute_dtype == 'bf16':
-            train_amp(model, train_loader, optimizer, device, scaler, torch.bfloat16)
+            train_amp(model, train_loader, optimizer, device, scaler, torch.bfloat16, grad_accum_step=cfg.accum_step)
             
         test(model, valid_loader, device)
         
