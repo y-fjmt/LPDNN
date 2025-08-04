@@ -31,7 +31,7 @@ if __name__ == '__main__':
     if args.valid:
         
         imagenet_valid_tar_path = './ILSVRC2012_img_val.tar'
-        target_dir = './ILSVRC2012_img_val_for_ImageFolder'
+        target_dir = './ILSVRC2012_img_val'
         meta_path = './ILSVRC2012_devkit_t12/data/meta.mat'
         trueth_label_path = './ILSVRC2012_devkit_t12/data/ILSVRC2012_validation_ground_truth.txt'
         
@@ -49,10 +49,9 @@ if __name__ == '__main__':
         
         num_valid_images = 50000
         with tarfile.open(imagenet_valid_tar_path, mode='r') as tar:
-            for valid_id, ilsvrc_id in zip(range(1, num_valid_images+1), ilsvrc_ids):
+            for valid_id, ilsvrc_id in zip(tqdm(range(1, num_valid_images+1)), ilsvrc_ids):
                 wnid = ilsvrc2012_id_to_wnid[ilsvrc_id]
                 filename = 'ILSVRC2012_val_{}.JPEG'.format(str(valid_id).zfill(8))
-                print(filename, wnid)
                 img = tar.extractfile(filename)
                 with open(os.path.join(target_dir, wnid, filename), 'wb') as f:
                     f.write(img.read())
