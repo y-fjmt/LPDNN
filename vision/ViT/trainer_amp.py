@@ -13,6 +13,7 @@ def train_amp(
         model: nn.Module, 
         train_loader: DataLoader, 
         optimizer: optim.Optimizer, 
+        scheduler: optim.lr_scheduler.LRScheduler,
         device: torch.device,
         scaler: amp.GradScaler, 
         dtype: torch.dtype,
@@ -44,6 +45,7 @@ def train_amp(
             scaler.step(optimizer)
             scaler.update()
             optimizer.zero_grad()
+            scheduler.step()
         
         iter.set_postfix({'loss': loss.detach().item() * grad_accum_step})
         

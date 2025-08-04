@@ -1,4 +1,5 @@
 import argparse
+import math
 
 import torch
 import torch.nn.functional as F
@@ -21,7 +22,7 @@ class cfg:
     epoch = 10
     lr = 5e-3
     batch_size = 4096
-    mini_batch_size = 64
+    mini_batch_size = 128
     accum_step = batch_size // mini_batch_size
 
 
@@ -67,12 +68,6 @@ if __name__ == '__main__':
     
     args = argument()
     
-    # model = vision_transformer.vit_b_16()
-    model = vision_transformer.vit_h_14()
-    optimizer = optim.Adam(model.parameters(), lr=cfg.lr)
-    
-    model = model.to(_to_torch_dype[args.weight_dtype])
-    
     if args.compute_dtype in ['fp16', 'bf16']:
         scaler = torch.amp.GradScaler()
     
@@ -110,22 +105,34 @@ if __name__ == '__main__':
     loader_kwargs = {
         "batch_size": cfg.mini_batch_size,
         "shuffle": True,
-        "num_workers": 128,
+        "num_workers": 8,
         "pin_memory": True,
     }
     train_loader = DataLoader(train_ds, **loader_kwargs)
     valid_loader = DataLoader(valid_ds, **loader_kwargs)
+    
+    # model = vision_transformer.vit_b_16()
+    model = vision_transformer.vit_h_14()
+    model = model.to(_to_torch_dype[args.weight_dtype])
+    
+    optimizer = optim.Adam(model.parameters(), lr=cfg.lr)
+    scheduler = optim.lr_scheduler.OneCycleLR(
+       optimizer=optimizer,
+       max_lr=cfg.lr,
+       epochs=cfg.epoch,
+       steps_per_epoch=(len(train_loader) // cfg.accum_step),
+   )
     
     for epoch in range(1, cfg.epoch+1):
         
         print('-'*5, f"[Epoch{epoch:02}]", '-'*5)
         
         if args.compute_dtype == 'fp32':
-            train(model, train_loader, optimizer, device, grad_accum_step=cfg.accum_step)
+            train(model, train_loader, optimizer, scheduler, device, grad_accum_step=cfg.accum_step)
         elif args.compute_dtype == 'fp16':
-            train_amp(model, train_loader, optimizer, device, scaler, torch.float16, grad_accum_step=cfg.accum_step)
+            train_amp(model, train_loader, optimizer, scheduler, device, scaler, torch.float16, grad_accum_step=cfg.accum_step)
         elif args.compute_dtype == 'bf16':
-            train_amp(model, train_loader, optimizer, device, scaler, torch.bfloat16, grad_accum_step=cfg.accum_step)
+            train_amp(model, train_loader, optimizer, scheduler, device, scaler, torch.bfloat16, grad_accum_step=cfg.accum_step)
             
         test(model, valid_loader, device)
         

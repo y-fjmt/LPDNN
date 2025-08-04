@@ -12,6 +12,7 @@ def train(
         model: nn.Module, 
         train_loader: DataLoader, 
         optimizer: optim.Optimizer, 
+        scheduler: optim.lr_scheduler.LRScheduler,
         device: torch.device,
         grad_accum_step: int = 1
     ) -> None:
@@ -36,6 +37,7 @@ def train(
         if ((batch_idx+1) % grad_accum_step == 0) or (batch_idx+1 == len(iter)):
             optimizer.step()
             optimizer.zero_grad()
+            scheduler.step()
         
         iter.set_postfix({'loss': loss.detach().item() * grad_accum_step})
         
