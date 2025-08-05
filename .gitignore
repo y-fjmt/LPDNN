@@ -9,5 +9,5 @@ pretrain_gpt/.logs/*
 pretrain_gpt/data/*
 pretrain_gpt/tokenizer/*
 
-vision/data/MNIST
-vision/data/ILSVRC2012_*
+vision/.logs
+vision/data/imagenet/ILSVRC2012_*
