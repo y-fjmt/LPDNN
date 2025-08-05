@@ -46,12 +46,13 @@ if __name__ == '__main__':
     weight_dtype = to_torch_dype(args.weight_dtype)
     model = vit_initializer(args.model, weight_dtype)
     
-    optimizer = optim.Adam(model.parameters(), lr=args.lr)
+    optimizer = optim.AdamW(model.parameters(), lr=args.lr, weight_decay=0.05)
     scheduler = optim.lr_scheduler.OneCycleLR(
        optimizer=optimizer,
        max_lr=args.lr,
        epochs=args.epoch,
        steps_per_epoch=math.ceil(len(train_loader) / args.accum_step),
+       pct_start=0.1
    )
     
     

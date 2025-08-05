@@ -1,5 +1,6 @@
 #!/bin/bash
 #$-cwd
+#$-j y
 #$-l cpu_4=1
 #$-l h_rt=24:00:00
 
