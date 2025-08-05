@@ -2,6 +2,22 @@ import json
 import argparse
 from argparse import Namespace
 
+import torch
+from transformer_engine.common.recipe import Format
+
+to_torch_dype = {
+    'fp32': torch.float32,
+    'fp16': torch.float16,
+    'bf16': torch.bfloat16,
+}
+
+to_te_fp8_format = {
+    'hybrid': Format.HYBRID,
+    'e4m3': Format.E4M3,
+    'e5m2': Format.E5M2,
+}
+
+
 def argument(summary: bool = True) -> Namespace:
     
     parser = argparse.ArgumentParser('Pre-training VisionTransformer with ImageNet')
@@ -18,9 +34,18 @@ def argument(summary: bool = True) -> Namespace:
                         dest='dtype')
     
     parser.add_argument('--weight-dtype', default='fp32', 
-                        choices=['fp32', 'fp16'],
+                        choices=['fp32', 'fp16', 'bf16'],
                         help='Model weight data type',
                         dest='weight_dtype')
+    
+    parser.add_argument('--fp8', action='store_true',
+                        help='Flag to enable fp8 training',
+                        dest='fp8')
+    
+    parser.add_argument('--fp8-format', default='hybrid', 
+                        choices=['hybrid', 'e4m3', 'e5m2'],
+                        help='fp8 format to compute specific layer',
+                        dest='fp8_format')
     
     # training setting
     parser.add_argument('--lr', type=float,
@@ -67,5 +92,10 @@ def argument(summary: bool = True) -> Namespace:
         print('='*20, 'Arguments', '='*20)
         print(json.dumps(args_dict, indent=2))
         print('='*50)
+        
+    # str -> actual type
+    args.dtype = to_torch_dype[args.dtype]
+    args.weight_dtype = to_torch_dype[args.weight_dtype]
+    args.fp8_format = to_te_fp8_format[args.fp8_format]
     
     return args

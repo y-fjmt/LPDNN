@@ -1,15 +1,4 @@
-import torch
 from torchvision import transforms
-from typing import Literal
-
-torch_dype_dict = {
-    'fp32': torch.float32,
-    'fp16': torch.float16,
-    'bf16': torch.bfloat16,
-}
-
-def to_torch_dype(str_dtype: Literal['fp32', 'fp16', 'bf16']):
-    return torch_dype_dict[str_dtype]
 
 
 def get_transforms() -> tuple[transforms.Compose]:

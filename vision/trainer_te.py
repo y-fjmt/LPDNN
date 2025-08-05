@@ -3,27 +3,26 @@ import torch
 import torch.nn.functional as F
 import torch.cuda.nvtx as nvtx
 from torch import nn
-from torch import amp
 from torch import optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
+from tqdm import tqdm
+
 import transformer_engine.pytorch as te
 from transformer_engine.common import recipe
+fp8_recipe = recipe.DelayedScaling()
 
-from tqdm import tqdm
 
 DEFAULT_DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-def train_amp(
+def train(
         model: nn.Module, 
         train_loader: DataLoader, 
         optimizer: optim.Optimizer, 
         scheduler: optim.lr_scheduler.LRScheduler,
         epoch: int,
-        scaler: amp.GradScaler, 
-        dtype: torch.dtype,
-        fp8_recipe: recipe.Recipe | None = None,
+        fp8_recipe: recipe.Recipe,
         grad_accum_step: int = 1,
         tensorboard_writer: SummaryWriter | None = None,
         device: torch.device = DEFAULT_DEVICE,
@@ -34,8 +33,6 @@ def train_amp(
     
     optimizer.zero_grad()
     
-    use_fp8 = (fp8_recipe is not None)
-    
     iter = tqdm(train_loader)
     iter.set_description('training progress')
     
@@ -44,20 +41,19 @@ def train_amp(
         inputs, labels = inputs.to(device), labels.to(device)
         
         with (
-                torch.amp.autocast('cuda', dtype),
-                te.fp8_autocast(enabled=use_fp8, fp8_recipe=fp8_recipe)
-            ):
+            torch.amp.autocast('cuda', dtype=torch.bfloat16),
+            te.fp8_autocast(fp8_recipe=fp8_recipe)
+        ):
             outputs = model(inputs)
-            loss = F.cross_entropy(outputs, labels)
-            loss = loss / grad_accum_step
-        
-        scaler.scale(loss).backward()
+            
+        loss = F.cross_entropy(outputs, labels)
+        loss = loss / grad_accum_step
+        loss.backward()
         
         scaled_loss = loss.detach().item() * grad_accum_step
         
         if ((batch_idx+1) % grad_accum_step == 0) or (batch_idx+1 == len(iter)):
-            scaler.step(optimizer)
-            scaler.update()
+            optimizer.step()
             optimizer.zero_grad()
             scheduler.step()
             
@@ -66,6 +62,5 @@ def train_amp(
                 global_step = (epoch-1) * steps_per_epoch + batch_idx // grad_accum_step
                 tensorboard_writer.add_scalar('train_loss', scaled_loss, global_step)
                 tensorboard_writer.add_scalar('lr', scheduler.get_last_lr()[0], global_step)
-            
-        iter.set_postfix({'loss': scaled_loss})
         
+        iter.set_postfix({'loss': scaled_loss})
