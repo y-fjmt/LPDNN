@@ -1,7 +1,8 @@
+import json
 import argparse
 from argparse import Namespace
 
-def argument() -> Namespace:
+def argument(summary: bool = True) -> Namespace:
     
     parser = argparse.ArgumentParser('Pre-training VisionTransformer with ImageNet')
     
@@ -60,5 +61,11 @@ def argument() -> Namespace:
     
     args = parser.parse_args()
     args.accum_step = args.batch_size // args.mini_batch_size
+    
+    if summary:
+        args_dict = vars(args)
+        print('='*20, 'Arguments', '='*20)
+        print(json.dumps(args_dict, indent=2))
+        print('='*50)
     
     return args
