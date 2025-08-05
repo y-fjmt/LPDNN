@@ -31,7 +31,7 @@ if __name__ == '__main__':
     if args.valid:
         
         imagenet_valid_tar_path = './ILSVRC2012_img_val.tar'
-        target_dir = './ILSVRC2012_img_val'
+        target_dir = './ILSVRC2012_img_val_classified'
         meta_path = './ILSVRC2012_devkit_t12/data/meta.mat'
         trueth_label_path = './ILSVRC2012_devkit_t12/data/ILSVRC2012_validation_ground_truth.txt'
         

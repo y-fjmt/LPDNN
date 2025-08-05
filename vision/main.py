@@ -28,7 +28,7 @@ if __name__ == '__main__':
     (train_trans, val_trans) = get_transforms()
     train_ds = datasets.ImageFolder(args.imagenet_root + '/ILSVRC2012_img_train', 
                                     transform=train_trans)
-    valid_ds = datasets.ImageFolder(args.imagenet_root + '/ILSVRC2012_img_val', 
+    valid_ds = datasets.ImageFolder(args.imagenet_root + '/ILSVRC2012_img_val_classified', 
                                     transform=val_trans)
     
     if args.debug:
