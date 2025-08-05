@@ -108,16 +108,18 @@ if __name__ == '__main__':
         print('-'*5, f"[Epoch{epoch:02}]", '-'*5)
         
         if args.compute_dtype == 'fp32':
-            train(model, train_loader, optimizer, scheduler, epoch, device, 
+            train(model, train_loader, optimizer, scheduler, epoch,  
                   grad_accum_step=cfg.accum_step, tensorboard_writer=writer)
             
         elif args.compute_dtype in ['fp16', 'bf16']:
             # bfloat16 does not need scale 
             # because the exponential part is the same as IEEE754
             scaler = torch.amp.GradScaler(enabled=(args.compute_dtype == 'fp16'))
-            train_amp(model, train_loader, optimizer, scheduler, epoch, device, scaler, _to_torch_dype[args.compute_dtype], 
-                  grad_accum_step=cfg.accum_step, tensorboard_writer=writer)
+            dtype  = _to_torch_dype[args.compute_dtype]
+            train_amp(model, train_loader, optimizer, scheduler, epoch, 
+                      scaler, dtype, 
+                      grad_accum_step=cfg.accum_step, tensorboard_writer=writer)
             
-        test(model, valid_loader, epoch, device)
+        test(model, valid_loader, epoch, tensorboard_writer=writer)
         
     

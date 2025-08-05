@@ -9,6 +9,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from tqdm import tqdm
 
+DEFAULT_DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def train(
         model: nn.Module, 
@@ -16,9 +17,9 @@ def train(
         optimizer: optim.Optimizer, 
         scheduler: optim.lr_scheduler.LRScheduler,
         epoch: int,
-        device: torch.device,
         grad_accum_step: int = 1,
-        tensorboard_writer: SummaryWriter | None = None
+        tensorboard_writer: SummaryWriter | None = None,
+        device: torch.device = DEFAULT_DEVICE,
     ) -> None:
     
     model.train()
@@ -58,8 +59,9 @@ def train(
 def test(
         model: nn.Module, 
         test_loader: DataLoader, 
-        device: torch.device,
-        tensorboard_writer: SummaryWriter | None = None
+        epoch: int,
+        tensorboard_writer: SummaryWriter | None = None,
+        device: torch.device = DEFAULT_DEVICE,
     ) -> None:
     
     model.eval()
@@ -92,5 +94,5 @@ def test(
     )
     
     if tensorboard_writer is not None:
-        tensorboard_writer.add_scalar('valid_loss', test_loss)
-        tensorboard_writer.add_scalar('accuracy', 100. * n_correct / len(test_loader.dataset))
+        tensorboard_writer.add_scalar('valid_loss', test_loss, epoch)
+        tensorboard_writer.add_scalar('accuracy', 100. * n_correct / len(test_loader.dataset), epoch)

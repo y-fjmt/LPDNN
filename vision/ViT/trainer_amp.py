@@ -10,6 +10,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from tqdm import tqdm
 
+DEFAULT_DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def train_amp(
         model: nn.Module, 
@@ -17,11 +18,11 @@ def train_amp(
         optimizer: optim.Optimizer, 
         scheduler: optim.lr_scheduler.LRScheduler,
         epoch: int,
-        device: torch.device,
         scaler: amp.GradScaler, 
         dtype: torch.dtype,
         grad_accum_step: int = 1,
-        tensorboard_writer: SummaryWriter | None = None
+        tensorboard_writer: SummaryWriter | None = None,
+        device: torch.device = DEFAULT_DEVICE,
     ) -> None:
     
     model.train()
