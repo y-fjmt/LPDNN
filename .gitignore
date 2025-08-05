@@ -11,3 +11,6 @@ pretrain_gpt/tokenizer/*
 
 vision/.logs
 vision/data/imagenet/ILSVRC2012_*
+
+*.sh.o*
+*.sh.e*
