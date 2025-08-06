@@ -26,14 +26,14 @@ apptainer \
     ${BINDING[@]} \
     apptainer/pytorch.sif \
     python3 vision/main.py \
-        --model b16 \
+        --model h14 \
         --dtype bf16 \
         --weight-dtype fp32 \
         --fp8 \
         --lr 3e-4 \
         --epoch 10 \
         --batch-size 4096 \
-        --mini-batch-size 1024 \
+        --mini-batch-size 128 \
         --imagenet-root $IMAGENET_ROOT \
         --workers 8 \
         --tensorboard-logdir vision/.logs/bf16-fp8-$(date +%s)
