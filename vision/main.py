@@ -40,9 +40,9 @@ if __name__ == '__main__':
         valid_ds = Subset(valid_ds, indices)
     
     train_loader = DataLoader(train_ds, args.mini_batch_size, True, 
-                              num_workers=args.workers, pin_memory=True)
+                              num_workers=args.workers, pin_memory=True, drop_last=True)
     valid_loader = DataLoader(valid_ds, args.mini_batch_size, True, 
-                              num_workers=args.workers, pin_memory=True)
+                              num_workers=args.workers, pin_memory=True, drop_last=True)
     
     
     # model and training componets

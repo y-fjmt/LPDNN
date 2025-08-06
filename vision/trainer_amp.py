@@ -55,7 +55,7 @@ def train_amp(
         
         scaled_loss = loss.detach().item() * grad_accum_step
         
-        if ((batch_idx+1) % grad_accum_step == 0) or (batch_idx+1 == len(iter)):
+        if ((batch_idx+1) % grad_accum_step == 0):
             scaler.step(optimizer)
             scaler.update()
             optimizer.zero_grad()

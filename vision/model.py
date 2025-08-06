@@ -9,7 +9,7 @@ def vit_initializer(
     ) -> nn.Module:
     
     kwargs = {
-        'dropout': 0.1
+        'dropout': 0.3
     }
     
     if key == 'b16':
