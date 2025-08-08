@@ -28,6 +28,10 @@ def argument(summary: bool = True) -> Namespace:
                         help='Vision Transformer model variant',
                         dest='model')
     
+    parser.add_argument('--dropout', type=float, default=0.0,
+                        help='Model dropout late',
+                        dest='dropout')
+    
     parser.add_argument('--dtype', default='fp32', 
                         choices=['fp32', 'fp16', 'bf16'],
                         help='Computational data type',

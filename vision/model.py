@@ -5,11 +5,12 @@ from torchvision.models import vision_transformer
 
 def vit_initializer(
         key: Literal['b16', 'b32', 'l16', 'l32', 'h14'], 
+        dropout: float = 0.0,
         dtype: torch.dtype = torch.float32,
     ) -> nn.Module:
     
     kwargs = {
-        'dropout': 0.3
+        'dropout': dropout
     }
     
     if key == 'b16':

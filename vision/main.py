@@ -46,7 +46,7 @@ if __name__ == '__main__':
     
     
     # model and training componets
-    model = vit_initializer(args.model, args.weight_dtype)
+    model = vit_initializer(args.model, dropout=args.dropout, dtype=args.weight_dtype)
     
     # replace LayerNorm and Linear to TE implementation
     fp8_recipe = None
